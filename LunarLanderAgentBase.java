@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 public class LunarLanderAgentBase {
     // The resolution of the observation space
     // The four variables of the observation space, from left to right:
@@ -7,7 +5,7 @@ public class LunarLanderAgentBase {
     //   1: Y component of the vector pointing to the middle of the platform from the lander
     //   2: X component of the velocity vector of the lander
     //   3: Y component of the velocity vector of the lander
-    static final int[] OBSERVATION_SPACE_RESOLUTION = {61, 20, 29, 29}; // TODO
+    static final int[] OBSERVATION_SPACE_RESOLUTION = {7, 9, 14, 14};
 
     final double[][] observationSpace;
     double[][][][][] qTable;
@@ -24,10 +22,10 @@ public class LunarLanderAgentBase {
     double bestReward = -200;
     double lastReward = -200;
 
-    double alpha = 0.1;
-    double gamma = 0.6;
+    double alpha = 0.01;
+    double gamma = 0.75;
     int epsilon_step = 100;
-    double epsilon_decay = 0.9;
+    double epsilon_decay = 0.95;
     int save_interval = 1000;
 
     int epoch = 0;
@@ -44,21 +42,46 @@ public class LunarLanderAgentBase {
         this.nIterations = nIterations;
     }
 
+    /**
+     * Visszaadja a kapott folytonos allapothoz tartozo kvantalt erteket.
+     * @param observationSpace
+     * @param state
+     * @return
+     */
     public static int[] quantizeState(double[][] observationSpace, double[] state) {
-        return new int[observationSpace.length]; // TODO
+        return new int[]{(int) ((state[0]-observationSpace[0][0]) / ((observationSpace[0][1]-observationSpace[0][0])/(OBSERVATION_SPACE_RESOLUTION[0]-1))),
+                (int) ((state[1]-observationSpace[1][0]) / ((observationSpace[1][1]-observationSpace[1][0])/(OBSERVATION_SPACE_RESOLUTION[1]-1))),
+                (int) ((state[2]-observationSpace[2][0]) / ((observationSpace[2][1]-observationSpace[2][0])/(OBSERVATION_SPACE_RESOLUTION[2]-1))),
+                (int) ((state[3]-observationSpace[3][0]) / ((observationSpace[3][1]-observationSpace[3][0])/(OBSERVATION_SPACE_RESOLUTION[3]-1)))
+        };
     }
 
     public void epochEnd(double epochRewardSum) {
-        return; // TODO
+        epsilon *= epsilon_decay;
+    }
+
+    private double getMaxValue(double[] array) {
+        double maxValue = array[0];
+        for (int i = 1; i < array.length; i++) {
+            if (array[i] > maxValue) {
+                maxValue = array[i];
+            }
+        }
+        return maxValue;
     }
 
     public void learn(double[] oldState, int action, double[] newState, double reward) {
-        return; // TODO
+        //System.out.println(reward);
+        int[] OldState = quantizeState(observationSpace, oldState);
+        int[] NewState = quantizeState(observationSpace, newState);
+
+        qTable[OldState[0]][OldState[1]][OldState[2]][OldState[3]][action] =
+                qTable[OldState[0]][OldState[1]][OldState[2]][OldState[3]][action] +
+                        alpha*(reward + gamma*(getMaxValue(qTable[NewState[0]][NewState[1]][NewState[2]][NewState[3]])) -
+                                qTable[OldState[0]][OldState[1]][OldState[2]][OldState[3]][action]);
     }
 
     public void trainEnd() {
-        // ... TODO
-        qTable = null; // TODO
-        test = true;
+        test = false;
     }
 }

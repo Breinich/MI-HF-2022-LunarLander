@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -5,6 +6,31 @@ import static java.lang.Math.min;
 
 public class LunarLanderEvaluator {
     public static void main(String[] args) {
+        var results = new int[5];
+        int max_point_count = 0;
+        int runs = 100;
+
+        for (int i = 0; i < runs; i++) {
+            var result = run();
+            results[0] += result.get(0);
+            results[1] += result.get(1);
+            results[2] += result.get(2);
+            results[3] += result.get(3);
+            results[4] += result.get(4);
+            if (result.get(5) >= 12) {
+                max_point_count++;
+            }
+        }
+        double max_point_rate = (max_point_count / (double) runs) * 100;
+
+        System.out.println("Max points:\n\tCount: " + max_point_count + " / " + runs + " runs\n\tRate: " + max_point_rate + "%");
+        System.out.println("Results:");
+        for (int i = 0; i < 5; i++) {
+            System.out.println("\t" + Result.values()[i].toString() + " : " + results[i]);
+        }
+    }
+
+    public static ArrayList<Integer> run() {
         int nIterations = (int) 1e6;
         int iteration = 0;
 
@@ -17,7 +43,6 @@ public class LunarLanderEvaluator {
         while (iteration < nIterations) {
             double[] state = env.reset();
 
-//            int epochIteration = 0;
             double epochRewardSum = 0;
             boolean done = false;
 
@@ -25,26 +50,23 @@ public class LunarLanderEvaluator {
                 int action = agent.step(state);
                 Environment.EnvStepDTO envStep = env.step(action);
                 done = env.done;
-//                System.out.println(
-//                        "step: " + env.stepCounter +
-//                        ", state: " + Arrays.toString(envStep.state) +
-//                        ", reward:" + envStep.reward
-//                );
                 agent.learn(state, action, envStep.state, envStep.reward);
 
                 state = envStep.state;
 
-//                epochIteration += 1;
                 epochRewardSum += envStep.reward;
 
                 iteration += 1;
-
             }
 
             agent.epochEnd(epochRewardSum);
         }
 
         agent.trainEnd();
+
+        //System.out.println(Arrays.deepToString(agent.qTable));
+        //System.out.println("Random steps  : " + LunarLanderAgent.randoms);
+        //System.out.println("Exploit steps : " + LunarLanderAgent.argmaxes);
 
         int nTestIterations = 10;
         double rewardSum = 0;
@@ -81,14 +103,21 @@ public class LunarLanderEvaluator {
         int maxPoints = 12;
         int earnedPoints = 0;
 
+        //System.out.println("Results:");
+        ArrayList<Integer> res = new ArrayList<>();
         for (Result resType : Result.values()) {
             Integer nOccurrence = iterationOutcomes.get(resType);
             earnedPoints += nOccurrence * pointDict.get(resType);
+
+            res.add(nOccurrence);
+            //System.out.println("\t" + resType.toString() + " : " + nOccurrence + " -> " + nOccurrence * pointDict.get(resType) + " points");
         }
 
         double pointFraction = min((double) earnedPoints / (double) maxPoints, 1.0);
 
-        System.out.println("{\"fraction\": " + pointFraction + "}");
+        //System.out.println("{\"fraction\": " + pointFraction + "}");
 
+        res.add(earnedPoints);
+        return res;
     }
 }
