@@ -23,9 +23,9 @@ public class LunarLanderAgentBase {
     double lastReward = -200;
 
     double alpha = 0.01;
-    double gamma = 0.75;
+    double gamma = 0.83;
     int epsilon_step = 100;
-    double epsilon_decay = 0.95;
+    double epsilon_decay = 0.91;
     int save_interval = 1000;
 
     int epoch = 0;
